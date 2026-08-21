@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Masuk — The Accent</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<!-- Supabase JS client -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+
+<style>
+:root{
+  --bg: #0f1522;
+  --bg-grain: #141b2b;
+  --surface: #1a2233;
+  --surface-2: #212b40;
+  --line: #2c3752;
+  --text: #eef1f7;
+  --text-muted: #9aa5bd;
+  --text-faint: #6b7591;
+  --brass: #d9ac66;
+  --brass-dim: rgba(217,172,102,0.14);
+  --navy: #2f4f8f;
+  --red: #e0685a;
+  --red-dim: rgba(224,104,90,0.12);
+  --green: #5fbb7a;
+  --radius: 12px;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  font-family:'IBM Plex Sans', sans-serif;
+  background:
+    radial-gradient(1000px 600px at 15% -10%, rgba(47,79,143,0.28), transparent 60%),
+    radial-gradient(800px 500px at 100% 110%, rgba(217,172,102,0.10), transparent 55%),
+    var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+  -webkit-font-smoothing:antialiased;
+}
+
+.login-wrap{
+  width:100%;
+  max-width:400px;
+}
+
+.brand{
+  text-align:center;
+  margin-bottom:28px;
+}
+.brand-crest{
+  width:44px; height:44px; margin:0 auto 14px;
+  display:flex; align-items:center; justify-content:center;
+  border:1.5px solid var(--brass); border-radius:10px;
+  background:var(--brass-dim);
+}
+.brand-eyebrow{
+  font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:0.18em;
+  text-transform:uppercase; color:var(--brass); margin:0 0 6px;
+}
+.brand-title{
+  font-family:'Fraunces', serif; font-weight:600; font-size:28px; margin:0;
+  letter-spacing:-0.01em; color:#ffffff;
+}
+.brand-sub{
+  font-size:13px; color:var(--text-muted); margin-top:8px;
+}
+
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:32px 28px;
+  box-shadow:0 20px 50px rgba(0,0,0,0.35);
+}
+
+.field{margin-bottom:18px;}
+.field label{
+  display:block; font-size:12.5px; font-weight:600; color:var(--text-muted);
+  margin-bottom:7px;
+}
+.field input{
+  width:100%; padding:11px 13px; border-radius:8px;
+  border:1px solid var(--line); background:var(--surface-2); color:var(--text);
+  font-family:'IBM Plex Sans', sans-serif; font-size:14px;
+  transition:.15s;
+}
+.field input:focus{
+  outline:none; border-color:var(--brass);
+  box-shadow:0 0 0 3px var(--brass-dim);
+}
+.field input::placeholder{color:var(--text-faint);}
+
+.btn-submit{
+  width:100%; padding:12px; border-radius:8px; border:none;
+  background:var(--brass); color:#1a1206;
+  font-family:'IBM Plex Sans', sans-serif; font-weight:700; font-size:14.5px;
+  cursor:pointer; transition:.15s; margin-top:6px;
+}
+.btn-submit:hover{filter:brightness(1.08);}
+.btn-submit:active{transform:scale(0.98);}
+.btn-submit:disabled{opacity:0.6; cursor:not-allowed;}
+
+.error-box{
+  display:none;
+  background:var(--red-dim); border:1px solid rgba(224,104,90,0.3);
+  color:var(--red); font-size:13px; padding:10px 13px; border-radius:8px;
+  margin-bottom:18px; line-height:1.5;
+}
+.error-box.show{display:block;}
+
+.footnote{
+  text-align:center; font-size:12px; color:var(--text-faint);
+  margin-top:20px; line-height:1.6;
+}
+
+.spinner{
+  display:inline-block; width:14px; height:14px;
+  border:2px solid rgba(26,18,6,0.3); border-top-color:#1a1206;
+  border-radius:50%; animation:spin 0.7s linear infinite;
+  vertical-align:middle; margin-right:7px;
+}
+@keyframes spin{to{transform:rotate(360deg);}}
+</style>
+</head>
+<body>
+
+<div class="login-wrap">
+  <div class="brand">
+    <div class="brand-crest">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#d9ac66" stroke-width="1.6"><path d="M4 21V9l8-5 8 5v12"/><path d="M9 21v-6h6v6"/><path d="M9 12h.01M15 12h.01M12 12h.01"/></svg>
+    </div>
+    <p class="brand-eyebrow">Front Desk System</p>
+    <h1 class="brand-title">The Accent</h1>
+    <p class="brand-sub">Masuk untuk melanjutkan ke sistem</p>
+  </div>
+
+  <div class="card">
+    <div class="error-box" id="errorBox"></div>
+
+    <form id="loginForm">
+      <div class="field">
+        <label for="email">Email</label>
+        <input type="email" id="email" placeholder="nama@theaccent.com" required autocomplete="username">
+      </div>
+      <div class="field">
+        <label for="password">Kata Sandi</label>
+        <input type="password" id="password" placeholder="••••••••" required autocomplete="current-password">
+      </div>
+      <button type="submit" class="btn-submit" id="submitBtn">Masuk</button>
+    </form>
+  </div>
+
+  <p class="footnote">Belum punya akun? Hubungi manager untuk didaftarkan.</p>
+</div>
+
+<script>
+// =====================================================================
+// KONFIGURASI SUPABASE
+// =====================================================================
+const SUPABASE_URL = 'https://ritanyfirmatubpjynon.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJpdGFueWZpcm1hdHVicGp5bm9uIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxOTM4NTcsImV4cCI6MjEwMjc2OTg1N30.6E3LBobNmRXb9PKtW638Om_j1RQB4_6JGExHvHNPmM0';
+
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const form = document.getElementById('loginForm');
+const emailInput = document.getElementById('email');
+const passwordInput = document.getElementById('password');
+const submitBtn = document.getElementById('submitBtn');
+const errorBox = document.getElementById('errorBox');
+
+function showError(msg){
+  errorBox.textContent = msg;
+  errorBox.classList.add('show');
+}
+function hideError(){
+  errorBox.classList.remove('show');
+}
+function setLoading(isLoading){
+  submitBtn.disabled = isLoading;
+  submitBtn.innerHTML = isLoading
+    ? '<span class="spinner"></span>Memeriksa…'
+    : 'Masuk';
+}
+
+// Kalau ternyata sudah ada sesi login aktif, langsung lempar ke app utama
+// (misal user buka halaman login lagi padahal sudah login sebelumnya).
+(async function checkExistingSession(){
+  const { data } = await supabaseClient.auth.getSession();
+  if(data && data.session){
+    window.location.href = 'app.html';
+  }
+})();
+
+form.addEventListener('submit', async function(e){
+  e.preventDefault();
+  hideError();
+
+  const email = emailInput.value.trim();
+  const password = passwordInput.value;
+
+  if(!email || !password){
+    showError('Email dan kata sandi wajib diisi.');
+    return;
+  }
+
+  setLoading(true);
+  try{
+    const { data, error } = await supabaseClient.auth.signInWithPassword({
+      email: email,
+      password: password
+    });
+
+    if(error){
+      if(error.message.includes('Invalid login credentials')){
+        showError('Email atau kata sandi salah. Coba periksa lagi.');
+      }else if(error.message.includes('Email not confirmed')){
+        showError('Akun ini belum dikonfirmasi. Hubungi manager untuk mengaktifkan.');
+      }else{
+        showError('Gagal masuk: ' + error.message);
+      }
+      setLoading(false);
+      return;
+    }
+
+    // Login berhasil -> cek apakah profil user ini aktif (is_active)
+    const userId = data.user.id;
+    const { data: profile, error: profileError } = await supabaseClient
+      .from('profiles')
+      .select('is_active, role, full_name')
+      .eq('id', userId)
+      .single();
+
+    if(profileError || !profile){
+      showError('Login berhasil tapi profil tidak ditemukan. Hubungi manager.');
+      await supabaseClient.auth.signOut();
+      setLoading(false);
+      return;
+    }
+
+    if(!profile.is_active){
+      showError('Akun ini sudah dinonaktifkan. Hubungi manager.');
+      await supabaseClient.auth.signOut();
+      setLoading(false);
+      return;
+    }
+
+    // Sukses -> lanjut ke app utama
+    window.location.href = 'app.html';
+
+  }catch(err){
+    showError('Terjadi kesalahan tak terduga. Coba lagi.');
+    setLoading(false);
+  }
+});
+</script>
+
+</body>
+</html>
