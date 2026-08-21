@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Masuk — The Accent</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;height:100%;}
+  body{
+    font-family:'IBM Plex Sans', sans-serif;
+    background:#0f1522;
+    color:#eef1f7;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    min-height:100vh;
+    padding:20px;
+  }
+  .login-card{
+    width:100%;
+    max-width:380px;
+    background:#151c2c;
+    border:1px solid #2c3752;
+    border-radius:14px;
+    padding:32px 28px;
+  }
+  .brand{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    color:#d9ac66;
+    margin-bottom:6px;
+  }
+  h1{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size:26px;
+    margin:0 0 24px 0;
+    color:#fff;
+  }
+  label{
+    display:block;
+    font-size:12.5px;
+    color:#b7c0d4;
+    margin-bottom:6px;
+    margin-top:16px;
+  }
+  input{
+    width:100%;
+    padding:11px 12px;
+    border-radius:8px;
+    border:1px solid #2c3752;
+    background:#0f1522;
+    color:#eef1f7;
+    font-size:14px;
+    font-family:'IBM Plex Sans', sans-serif;
+  }
+  input:focus{
+    outline:none;
+    border-color:#d9ac66;
+  }
+  button{
+    width:100%;
+    margin-top:24px;
+    padding:12px;
+    border-radius:8px;
+    border:none;
+    background:#d9ac66;
+    color:#0f1522;
+    font-weight:600;
+    font-size:14.5px;
+    cursor:pointer;
+    font-family:'IBM Plex Sans', sans-serif;
+  }
+  button:hover{background:#e6bc7c;}
+  button:disabled{opacity:0.6;cursor:not-allowed;}
+  #errorMsg{
+    margin-top:14px;
+    font-size:13px;
+    color:#ff8a8a;
+    display:none;
+  }
+  #loadingMsg{
+    margin-top:14px;
+    font-size:13px;
+    color:#9aa5bd;
+    display:none;
+  }
+</style>
+</head>
+<body>
+
+<div class="login-card">
+  <div class="brand">The Accent</div>
+  <h1>Masuk ke akun</h1>
+
+  <form id="loginForm">
+    <label for="email">Email</label>
+    <input type="email" id="email" required autocomplete="username" placeholder="nama@contoh.com">
+
+    <label for="password">Password</label>
+    <input type="password" id="password" required autocomplete="current-password" placeholder="••••••••">
+
+    <button type="submit" id="submitBtn">Masuk</button>
+    <div id="errorMsg"></div>
+    <div id="loadingMsg">Memeriksa sesi...</div>
+  </form>
+</div>
+
+<script>
+(function(){
+  const SUPABASE_URL = 'https://ritanyfirmatubpjynon.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJpdGFueWZpcm1hdHVicGp5bm9uIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxOTM4NTcsImV4cCI6MjEwMjc2OTg1N30.6E3LBobNmRXb9PKtW638Om_j1RQB4_6JGExHvHNPmM0';
+
+  // Client Supabase yang sama persis dengan yang dipakai app.html/index.html,
+  // supaya sesi login yang dibuat di sini dikenali juga di halaman app.
+  window.supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  const form = document.getElementById('loginForm');
+  const emailInput = document.getElementById('email');
+  const passwordInput = document.getElementById('password');
+  const submitBtn = document.getElementById('submitBtn');
+  const errorMsg = document.getElementById('errorMsg');
+  const loadingMsg = document.getElementById('loadingMsg');
+
+  function showError(text){
+    errorMsg.textContent = text;
+    errorMsg.style.display = 'block';
+  }
+  function hideError(){
+    errorMsg.style.display = 'none';
+  }
+
+  // Kalau ternyata sudah ada sesi aktif (misal user balik lagi ke halaman ini
+  // padahal sudah login), langsung lempar ke halaman app tanpa perlu isi form lagi.
+  async function checkExistingSession(){
+    loadingMsg.style.display = 'block';
+    try{
+      const { data } = await window.supabaseClient.auth.getSession();
+      if(data && data.session){
+        window.location.href = 'index.html';
+        return;
+      }
+    }catch(e){
+      console.error('Gagal cek sesi:', e);
+    }
+    loadingMsg.style.display = 'none';
+  }
+  checkExistingSession();
+
+  form.addEventListener('submit', async function(e){
+    e.preventDefault();
+    hideError();
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Memproses...';
+
+    const email = emailInput.value.trim();
+    const password = passwordInput.value;
+
+    try{
+      const { data, error } = await window.supabaseClient.auth.signInWithPassword({ email, password });
+
+      if(error){
+        showError('Email atau password salah. Coba lagi.');
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Masuk';
+        return;
+      }
+
+      // Cek juga apakah akun ini punya profil aktif di tabel profiles,
+      // supaya user langsung tahu kalau akunnya nonaktif/belum di-setup,
+      // bukan baru ketahuan setelah nyasar ke halaman app.
+      const userId = data.user.id;
+      const { data: profile, error: profileError } = await window.supabaseClient
+        .from('profiles')
+        .select('id, is_active')
+        .eq('id', userId)
+        .single();
+
+      if(profileError || !profile || !profile.is_active){
+        await window.supabaseClient.auth.signOut();
+        showError('Akun ini belum aktif atau belum terdaftar. Hubungi admin.');
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Masuk';
+        return;
+      }
+
+      // Sukses — lempar ke halaman utama app.
+      window.location.href = 'index.html';
+    }catch(e){
+      console.error('Gagal login:', e);
+      showError('Terjadi kesalahan. Coba lagi.');
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Masuk';
+    }
+  });
+})();
+</script>
+
+</body>
+</html>
